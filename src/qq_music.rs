@@ -1,7 +1,8 @@
+use crate::request::Request;
+use crate::response::{Response, ResponseError, ResponseResult};
 use std::cell::{Ref, RefCell};
 use std::collections::HashMap;
-use crate::request::Request;
-use crate::response::{Response, ResponseResult};
+use crate::routes;
 
 pub struct QQMusic {
     cookies: RefCell<Option<HashMap<String, String>>>,
@@ -9,13 +10,15 @@ pub struct QQMusic {
 
 impl QQMusic {
     pub fn new() -> QQMusic {
-        QQMusic { cookies: RefCell::new(None) }
+        QQMusic {
+            cookies: RefCell::new(None),
+        }
     }
 
     pub fn uin(&self) -> Option<String> {
         match self.cookies.borrow().as_ref() {
             None => None,
-            Some(cookies) => Some(cookies["uni"].clone())
+            Some(cookies) => Some(cookies["uni"].clone()),
         }
     }
 
@@ -49,35 +52,36 @@ impl QQMusic {
         self.cookies.borrow_mut().replace(new);
     }
 
-    pub fn api<T>(&self, path: &str, mut query: HashMap<String, String>) {
-        query.insert("ownCookie".to_string(), "1".to_string());
-        let request = Request::new(query, &self.cookies.borrow());
+    pub async fn api<T>(&self, path: &str, mut query: HashMap<String, String>) -> ResponseResult<T> {
+        let mut res = Err(ResponseError::Pending);
+
+        let mut result_handle = |r| res = r;
+        let redirect_handle = |url| unimplemented!();
+        let cookie_handle = |key: &str, value: &str| {
+            let mut cookies = self.cookies.borrow_mut();
+            match cookies.as_mut() {
+                None => {
+                    let new = HashMap::from([(key.into(), value.into())]);
+                    cookies.replace(new);
+                }
+                Some(cookies) => {
+                    cookies.insert(key.into(), value.into());
+                }
+            }
+        };
+
+        query.insert("ownCookie".into(), "1".into());
+        let cookies = self.cookies.borrow();
+        let request = Request::new(query, &cookies);
 
         let response: Response<T> = Response::new(
-            &|res| self.result_handle(res),
-            &|url| self.redirect_handle(url),
-            &|key, value| self.cookie_handle(key, value),
+            &mut result_handle,
+            &redirect_handle,
+            &cookie_handle,
         );
 
+        routes::route(path, &request, &response).await;
 
-    }
-
-    fn result_handle<T>(&self, result: ResponseResult<T>) {}
-
-    fn redirect_handle(&self, url: &str) {}
-
-    fn cookie_handle(&self, key: &str, value: &str) {
-        let key = key.to_string();
-        let value = key.to_string();
-        let mut cookies = self.cookies.borrow_mut();
-        match cookies.as_mut() {
-            None => {
-                let new = HashMap::from([(key, value)]);
-                cookies.replace(new);
-            }
-            Some(cookies) => {
-                cookies.insert(key, value);
-            }
-        }
+        res
     }
 }
