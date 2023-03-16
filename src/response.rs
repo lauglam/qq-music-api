@@ -1,4 +1,5 @@
-use derive_more::{Display, From};
+use derive_more::Display;
+use crate::request::RequestError;
 
 pub struct Response<'a, T> {
     result: &'a mut dyn FnMut(ResponseResult<T>),
@@ -38,10 +39,17 @@ impl<'a, T> Response<'a, T> {
 
 pub type ResponseResult<T> = Result<T, ResponseError>;
 
-#[derive(Debug, Display, From)]
+#[derive(Debug, Display)]
 pub enum ResponseError {
     #[display(fmt = "pending")]
     Pending,
+    RequestError(RequestError),
 }
 
 impl std::error::Error for ResponseError {}
+
+impl From<RequestError> for ResponseError {
+    fn from(value: RequestError) -> Self {
+        ResponseError::RequestError(value)
+    }
+}

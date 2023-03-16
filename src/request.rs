@@ -37,8 +37,20 @@ impl<'a> Request<'a> {
         query: HashMap<String, String>,
         cookies: &'a Option<HashMap<String, String>>,
     ) -> Request {
+        let mut client = Client::builder();
+        if let Some(cookies) = cookies {
+            let cookies = cookies
+                .into_iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect::<Vec<String>>()
+                .join("; ");
+
+            client = client.add_default_header(("Cookie", cookies));
+        }
+        let client = client.finish();
+
         Request {
-            client: Client::default(),
+            client,
             query,
             cookies,
         }

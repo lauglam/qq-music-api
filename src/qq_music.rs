@@ -2,6 +2,7 @@ use crate::request::Request;
 use crate::response::{Response, ResponseError, ResponseResult};
 use std::cell::{Ref, RefCell};
 use std::collections::HashMap;
+use serde::de::DeserializeOwned;
 use crate::routes;
 
 pub struct QQMusic {
@@ -52,7 +53,7 @@ impl QQMusic {
         self.cookies.borrow_mut().replace(new);
     }
 
-    pub async fn api<T>(&self, path: &str, mut query: HashMap<String, String>) -> ResponseResult<T> {
+    pub async fn api<T: DeserializeOwned>(&self, path: &str, mut query: HashMap<String, String>) -> ResponseResult<T> {
         let mut res = Err(ResponseError::Pending);
 
         let mut result_handle = |r| res = r;
@@ -80,7 +81,7 @@ impl QQMusic {
             &cookie_handle,
         );
 
-        routes::route(path, &request, &response).await;
+        routes::route(path, request, response).await;
 
         res
     }
