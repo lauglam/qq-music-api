@@ -45,7 +45,9 @@ impl<'a> Request<'a> {
                 .collect::<Vec<String>>()
                 .join("; ");
 
-            client = client.add_default_header(("Cookie", cookies));
+            client = client
+                .add_default_header(("Cookie", cookies))
+                .add_default_header(("Referer", "https://y.qq.com/"));
         }
         let client = client.finish();
 
@@ -68,7 +70,7 @@ impl<'a> Request<'a> {
         &self,
         url: &str,
         method: Method,
-        value: &A,
+        data: &A,
     ) -> RequestResult<T>
         where A: Serialize,
               T: DeserializeOwned,
@@ -78,7 +80,7 @@ impl<'a> Request<'a> {
                 .request(method.into(), url)
                 .query(&self.query)
                 .unwrap()
-                .send_json(value)
+                .send_json(data)
                 .await?
                 .json::<T>()
                 .await?

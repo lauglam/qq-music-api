@@ -25,6 +25,8 @@ pub(crate) async fn route<'a, T: DeserializeOwned>(path: &str, req: Request<'a>,
         "/song" => song::info(req, res).await,
         "/song/urls" => song::urls(req, res).await,
         "/song/url" => song::url(req, res).await,
+
+        "/search" => search::info(req, res).await,
         _ => unreachable!(),
     }
 }
