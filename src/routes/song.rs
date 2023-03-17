@@ -1,4 +1,6 @@
+use awc::http::header::TryIntoHeaderPair;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use serde_json::json;
 use crate::request::{Method, Request, RequestResult};
 use crate::response::Response;
@@ -22,7 +24,7 @@ pub(crate) async fn info<'a, T: DeserializeOwned>(req: Request<'a>, mut res: Res
         }
     });
 
-    let result: RequestResult<T> = req.send_json(URL, Method::GET, &data).await;
+    let result = req.send_json(URL, Method::GET, &data).await;
     res.result(match result {
         Ok(t) => Ok(t),
         Err(e) => Err(e.into()),

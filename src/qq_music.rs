@@ -73,9 +73,9 @@ impl QQMusic {
 
         query.insert("ownCookie".into(), "1".into());
         let cookies = self.cookies.borrow();
-        let request = Request::new(query, &cookies);
 
-        let response: Response<T> = Response::new(
+        let request = Request::new(query, &cookies);
+        let response = Response::new(
             &mut result_handle,
             &redirect_handle,
             &cookie_handle,
